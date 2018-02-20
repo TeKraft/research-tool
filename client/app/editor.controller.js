@@ -198,14 +198,30 @@ https://docs.google.com/document/d/1bdUVHCHWHOLIZyc8MD23WwZZo9Bmdndy5qDeHIEHkCU/
             .ok('download')
             .cancel('cancel');
 
-          $mdDialog.show(confirm).then(function(result) {
-              $scope.status = 'Download PNG named as ' + result + '.';
+          $mdDialog.show(confirm).then(function(donwloadName) {
+              $scope.status = 'Download ZIP named as ' + donwloadName + '.';
 
               var downloadData = document.getElementById('downloadButton');
               var canvasDrawDownload = canvasData.toDataURL("image/png").replace("image/png", "image/octet-stream");
-              downloadData.setAttribute('download', result+'.png');
-              downloadData.setAttribute('href', canvasDrawDownload);
-              downloadData.click();
+            //   downloadData.setAttribute('download', donwloadName+'.png');
+            //   downloadData.setAttribute('href', canvasDrawDownload);
+            //   downloadData.click();
+
+              var fileContent = writeToFile();
+
+              // create zip
+              var zip = new JSZip();
+              zip.file(donwloadName + "_metadata.txt", fileContent);
+              
+              var base64 = canvasDrawDownload.replace(/^data:image\/octet-stream;base64,/, "");
+
+              zip.file(donwloadName + ".png", base64, {base64: true});
+
+              zip.generateAsync({type:"blob"})
+              .then(function(content) {
+                  saveAs(content, donwloadName + ".zip");
+              });
+
           }, function() {
               $scope.status = 'You didn\'t choose to donwload as png.';
           });
@@ -347,10 +363,10 @@ https://docs.google.com/document/d/1bdUVHCHWHOLIZyc8MD23WwZZo9Bmdndy5qDeHIEHkCU/
             twoDimObj[x][y] = "("+curColor.r+ "," +curColor.g+ "," +curColor.b+ ")";
             increaseCounter(twoDimObj[x][y]);
 
-            console.log("number of pixel drawn");
-            console.log(uncertaintyCounter);
-            console.log(lessuncertaintyCounter);
-            console.log(certaintyCounter);
+            // console.log("number of pixel drawn");
+            // console.log(uncertaintyCounter);
+            // console.log(lessuncertaintyCounter);
+            // console.log(certaintyCounter);
         };
 
         function increaseCounter(colorString) {
@@ -460,6 +476,15 @@ https://docs.google.com/document/d/1bdUVHCHWHOLIZyc8MD23WwZZo9Bmdndy5qDeHIEHkCU/
                    contextDraw.closePath();
                    contextDraw.stroke();
             }
+        }
+
+        function writeToFile() {
+            var content = 
+            "certaintyCounter : " + certaintyCounter + " \n" +
+            "lessuncertaintyCounter : " + lessuncertaintyCounter + " \n" +
+            "uncertaintyCounter : " + uncertaintyCounter;
+
+            return content;
         }
 
         // var oldImage = new Image(); // for saving
